@@ -2,7 +2,6 @@ import datetime
 import os
 import json
 from discord.ext import tasks
-from datetime import *
 
 import discord
 from iaGen import setup_iaGen

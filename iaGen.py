@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torchvision import datasets
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, TensorDataset
 from torch.amp import autocast
 from torch.cuda.amp import GradScaler
 import os
@@ -83,6 +83,14 @@ def setup_iaGen():
         T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ])
 
+    def preload_dataset(dataset):
+        loader = DataLoader(dataset, batch_size=256, num_workers=4, pin_memory=True)
+        all_images = []
+        for imgs, _ in loader:
+            all_images.append(imgs)
+        print("images loaded")
+        return TensorDataset(torch.cat(all_images))
+
     async def training(ia_type, ia_default_stats):
         state["is_training"] = True
         epochi = 0
@@ -96,12 +104,13 @@ def setup_iaGen():
 
         chemin_images = f'DataSets/{ia_type}'
         dataset = datasets.ImageFolder(root=chemin_images, transform=transform)
-        data_loader = DataLoader(dataset, batch_size=batchsize, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
+        preloaded = preload_dataset(dataset)
+        data_loader = DataLoader(preloaded, batch_size=batchsize, shuffle=True, drop_last=True, num_workers=0, pin_memory=True)
 
         def train_step():
             nonlocal epochi
             while state["is_training"]:
-                for data, _ in data_loader:
+                for (data,) in data_loader:
                     if not state["is_training"]:
                         break
 
@@ -135,10 +144,10 @@ def setup_iaGen():
                     losses.append([d_loss.item(), g_loss.item()])
 
                 epochi += 1
-                data = load_ia()
-
-                get_type_data(data, ia_type, ia_default_stats)["epoch"] += 1
-                save_ia(data)
+                if epochi % 10 == 0:
+                    ia_data = load_ia()
+                    get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 10
+                    save_ia(ia_data)
                 print(f'Epoch {epochi}')
 
         await asyncio.to_thread(train_step)

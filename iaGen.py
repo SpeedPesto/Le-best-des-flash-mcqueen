@@ -166,7 +166,7 @@ def setup_iaGen():
         state["is_training"] = False
 
     async def save(ia_type):
-        path = "models/"
+        path = "/content/drive/MyDrive/Le-best-des-flash-mcqueen/models/"
         os.makedirs(path, exist_ok=True)
 
         torch.save(gnet.state_dict(), path + f"gnet_{ia_type}.pth")

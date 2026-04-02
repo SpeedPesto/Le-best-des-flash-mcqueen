@@ -87,9 +87,11 @@ def setup_iaGen():
         state["is_training"] = True
         epochi = 0
 
-        if os.path.exists(f"models/dnet_{ia_type}.pth") and os.path.exists(f"models/gnet_{ia_type}.pth"):
-            dnet.load_state_dict(torch.load(f"models/dnet_{ia_type}.pth", map_location=device))
-            gnet.load_state_dict(torch.load(f"models/gnet_{ia_type}.pth", map_location=device))
+        models_path = "/content/drive/MyDrive/Le-best-des-flash-mcqueen/models/"
+
+        if os.path.exists(f"{models_path}dnet_{ia_type}.pth") and os.path.exists(f"{models_path}gnet_{ia_type}.pth"):
+            dnet.load_state_dict(torch.load(f"{models_path}dnet_{ia_type}.pth", map_location=device))
+            gnet.load_state_dict(torch.load(f"{models_path}gnet_{ia_type}.pth", map_location=device))
             print(f"Models de {ia_type} chargés avec succès !")
         else:
             print(f"Aucun modèle de {ia_type} trouvé")

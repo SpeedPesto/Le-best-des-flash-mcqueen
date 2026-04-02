@@ -6,9 +6,12 @@ from Stats import setup_stats
 from messagesStats import setup_messagesStats
 from iaController import setup_iaController
 import sys
+from dotenv import load_dotenv
+import os
 print(sys.executable)
 
-TOKEN = "MTQ4NzA4ODYwMzM5NzA5NTU0NA.GmovnO.LlzUliE_-XAHwOqv-fQ2Vl0ug3BLzHxPT6boNQ"
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True

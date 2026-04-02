@@ -145,14 +145,15 @@ def setup_iaGen():
                     losses.append([d_loss.item(), g_loss.item()])
 
                 epochi += 1
-                if on_epoch:
-                    img = generate_sync()
-                    asyncio.run_coroutine_threadsafe(on_epoch(epochi, img), loop)
+                if epochi % 5 == 0:
+                    if on_epoch:
+                        img = generate_sync()
+                        asyncio.run_coroutine_threadsafe(on_epoch(epochi, img), loop)
                 if epochi % 10 == 0:
                     ia_data = load_ia()
                     get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 10
                     save_ia(ia_data)
-                if epochi % 50 == 0:
+                if epochi % 15 == 0:
                     asyncio.run_coroutine_threadsafe(save(ia_type), loop)
                     print("ia sauvegardé par sécurité")
                 print(f'Epoch {epochi}')

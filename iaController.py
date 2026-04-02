@@ -46,6 +46,7 @@ class iaView(discord.ui.View):
                 self.update_embed.start()
 
             async def on_epoch(epochi, img):
+                print("affiché")
                 await interaction.edit_original_response(embed=embed, file = discord.File(img, filename="preview.png"))
                 print("affiché")
 

@@ -45,7 +45,10 @@ class iaView(discord.ui.View):
             if not self.update_embed.is_running():
                 self.update_embed.start()
 
-            await self.ia_gen["training"](self.ia_type, self.ia_default_stats)
+            async def on_epoch(epochi, img):
+                await interaction.edit_original_response(embed=embed, file = discord.File(img, filename="preview.png"))
+
+            await self.ia_gen["training"](self.ia_type, self.ia_default_stats, on_epoch)
 
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="ia_stop")
     async def stop(self, interaction, button):

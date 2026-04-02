@@ -47,6 +47,7 @@ class iaView(discord.ui.View):
 
             async def on_epoch(epochi, img):
                 await interaction.edit_original_response(embed=embed, file = discord.File(img, filename="preview.png"))
+                print("affiché")
 
             await self.ia_gen["training"](self.ia_type, self.ia_default_stats, on_epoch)
 

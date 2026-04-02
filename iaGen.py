@@ -7,7 +7,8 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from torchvision import datasets
 from torch.utils.data import DataLoader, Subset
-from torch.amp import autocast, GradScaler
+from torch.amp import autocast
+from torch.cuda.amp import GradScaler
 import os
 
 class discriminatorNet(nn.Module):

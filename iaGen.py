@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 from torchvision import datasets
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, Subset
 from torch.amp import autocast
 from torch.cuda.amp import GradScaler
 import os
@@ -29,7 +29,7 @@ class discriminatorNet(nn.Module):
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
         x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2)
-        return self.conv5(x).view(-1, 1)
+        return torch.sigmoid(self.conv5(x)).view(-1, 1)
 
 class generatorNet(nn.Module):
     def __init__(self):
@@ -53,9 +53,10 @@ class generatorNet(nn.Module):
         return torch.tanh(self.conv5(x))
 
 
+
 def setup_iaGen():
     state = {"is_training": False}
-    batchsize = 128
+    batchsize = 256
 
     scaler_d = GradScaler()
     scaler_g = GradScaler()
@@ -66,7 +67,7 @@ def setup_iaGen():
     dnet = discriminatorNet().to(device)
     gnet = generatorNet().to(device)
 
-    lossfun = nn.BCEWithLogitsLoss()
+    lossfun = nn.BCELoss()
 
     d_optimizer = torch.optim.Adam(dnet.parameters(), lr=0.0002, betas=(0.5, 0.999))
     g_optimizer = torch.optim.Adam(gnet.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -83,13 +84,6 @@ def setup_iaGen():
         T.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
     ])
 
-    def preload_dataset(dataset):
-        loader = DataLoader(dataset, batch_size=256, num_workers=4, pin_memory=True)
-        all_images = []
-        for imgs, _ in loader:
-            all_images.append(imgs)
-        return TensorDataset(torch.cat(all_images))
-
     async def training(ia_type, ia_default_stats):
         state["is_training"] = True
         epochi = 0
@@ -103,13 +97,12 @@ def setup_iaGen():
 
         chemin_images = f'DataSets/{ia_type}'
         dataset = datasets.ImageFolder(root=chemin_images, transform=transform)
-        preloaded = preload_dataset(dataset)
-        data_loader = DataLoader(preloaded, batch_size=batchsize, shuffle=True, drop_last=True, num_workers=0, pin_memory=True)
+        data_loader = DataLoader(dataset, batch_size=batchsize, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
 
         def train_step():
             nonlocal epochi
             while state["is_training"]:
-                for (data,) in data_loader:
+                for data, _ in data_loader:
                     if not state["is_training"]:
                         break
 
@@ -125,7 +118,7 @@ def setup_iaGen():
                         d_loss_fake = lossfun(pred_fake, fake_labels)
                         d_loss = d_loss_real + d_loss_fake
 
-                    d_optimizer.zero_grad(set_to_none=True)
+                    d_optimizer.zero_grad()
                     scaler_d.scale(d_loss).backward()
                     scaler_d.step(d_optimizer)
                     scaler_d.update()
@@ -135,7 +128,7 @@ def setup_iaGen():
                         pred_fake = dnet(fake_images)
                         g_loss = lossfun(pred_fake, real_labels)
 
-                    g_optimizer.zero_grad(set_to_none=True)
+                    g_optimizer.zero_grad()
                     scaler_g.scale(g_loss).backward()
                     scaler_g.step(g_optimizer)
                     scaler_g.update()
@@ -143,10 +136,10 @@ def setup_iaGen():
                     losses.append([d_loss.item(), g_loss.item()])
 
                 epochi += 1
-                if epochi % 10 == 0:
-                    ia_data = load_ia()
-                    get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 10
-                    save_ia(ia_data)
+                data = load_ia()
+
+                get_type_data(data, ia_type, ia_default_stats)["epoch"] += 1
+                save_ia(data)
                 print(f'Epoch {epochi}')
 
         await asyncio.to_thread(train_step)
@@ -158,7 +151,7 @@ def setup_iaGen():
         else:
             return {}
 
-    def save_ia(ia):
+    def save_ia(ia, ):
         with open("ia.json", "w") as f:
             json.dump(ia, f, indent=4)
 

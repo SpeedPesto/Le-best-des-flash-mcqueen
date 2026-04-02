@@ -29,7 +29,7 @@ class discriminatorNet(nn.Module):
         x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
         x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
         x = F.leaky_relu(self.bn4(self.conv4(x)), 0.2)
-        return torch.sigmoid(self.conv5(x)).view(-1, 1)
+        return self.conv5(x).view(-1, 1)
 
 class generatorNet(nn.Module):
     def __init__(self):
@@ -53,7 +53,6 @@ class generatorNet(nn.Module):
         return torch.tanh(self.conv5(x))
 
 
-
 def setup_iaGen():
     state = {"is_training": False}
     batchsize = 2048
@@ -67,7 +66,7 @@ def setup_iaGen():
     dnet = discriminatorNet().to(device)
     gnet = generatorNet().to(device)
 
-    lossfun = nn.BCELoss()
+    lossfun = nn.BCEWithLogitsLoss()
 
     d_optimizer = torch.optim.Adam(dnet.parameters(), lr=0.0002, betas=(0.5, 0.999))
     g_optimizer = torch.optim.Adam(gnet.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -118,7 +117,7 @@ def setup_iaGen():
                         d_loss_fake = lossfun(pred_fake, fake_labels)
                         d_loss = d_loss_real + d_loss_fake
 
-                    d_optimizer.zero_grad()
+                    d_optimizer.zero_grad(set_to_none=True)
                     scaler_d.scale(d_loss).backward()
                     scaler_d.step(d_optimizer)
                     scaler_d.update()
@@ -128,7 +127,7 @@ def setup_iaGen():
                         pred_fake = dnet(fake_images)
                         g_loss = lossfun(pred_fake, real_labels)
 
-                    g_optimizer.zero_grad()
+                    g_optimizer.zero_grad(set_to_none=True)
                     scaler_g.scale(g_loss).backward()
                     scaler_g.step(g_optimizer)
                     scaler_g.update()
@@ -151,7 +150,7 @@ def setup_iaGen():
         else:
             return {}
 
-    def save_ia(ia, ):
+    def save_ia(ia):
         with open("ia.json", "w") as f:
             json.dump(ia, f, indent=4)
 

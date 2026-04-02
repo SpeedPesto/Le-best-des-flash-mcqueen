@@ -55,7 +55,7 @@ class generatorNet(nn.Module):
 
 def setup_iaGen():
     state = {"is_training": False}
-    batchsize = 2048
+    batchsize = 128
 
     scaler_d = GradScaler()
     scaler_g = GradScaler()

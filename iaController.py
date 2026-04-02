@@ -118,8 +118,8 @@ async def getEmbed(ia_type, ia_default_stats, isTraining : bool, image_url=None)
     titre = f"Ia générative : {ia_type}"
     if isTraining:
         description = "**Je m'entraine. . .**"
-        if image_url: description += f"\n\nExemple genré en **temps réel** :"
-        footer = "(si tu veux générer une image, appuie d'abord sur 'SAVE'"
+        if image_url: description += "(Exemple genré en **temps réel** :)"
+        footer = "Clique sur 'Generate' pour un aperçu de la puissance de Flash Mcqueen le goat"
 
     else:
         description = ""

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from torchvision import datasets
 from torch.utils.data import DataLoader, Subset
+from torch.amp import autocast, GradScaler
 import os
 
 class discriminatorNet(nn.Module):
@@ -54,7 +55,10 @@ class generatorNet(nn.Module):
 
 def setup_iaGen():
     state = {"is_training": False}
-    batchsize = 512
+    batchsize = 2048
+
+    scaler_d = GradScaler()
+    scaler_g = GradScaler()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
@@ -90,10 +94,12 @@ def setup_iaGen():
         else:
             print(f"Aucun modèle de {ia_type} trouvé")
 
+        compiled_dnet = torch.compile(dnet)
+        compiled_gnet = torch.compile(gnet)
+
         chemin_images = f'DataSets/{ia_type}'
         dataset = datasets.ImageFolder(root=chemin_images, transform=transform)
-        dataset = Subset(dataset, range(4000))
-        data_loader = DataLoader(dataset, batch_size=batchsize, shuffle=True, drop_last=True)
+        data_loader = DataLoader(dataset, batch_size=batchsize, shuffle=True, drop_last=True, num_workers=2, pin_memory=True)
 
         def train_step():
             nonlocal epochi
@@ -106,25 +112,28 @@ def setup_iaGen():
                     real_labels = torch.ones(batchsize, 1).to(device)
                     fake_labels = torch.zeros(batchsize, 1).to(device)
 
-                    pred_real = dnet(data)
-                    d_loss_real = lossfun(pred_real, real_labels)
+                    with autocast(device_type='cuda'):
+                        pred_real = compiled_dnet(data)
+                        d_loss_real = lossfun(pred_real, real_labels)
+                        fake_images = compiled_gnet(torch.randn(batchsize, 100, 1, 1).to(device))
+                        pred_fake = compiled_dnet(fake_images.detach())
+                        d_loss_fake = lossfun(pred_fake, fake_labels)
+                        d_loss = d_loss_real + d_loss_fake
 
-                    fake_images = gnet(torch.randn(batchsize, 100, 1, 1).to(device))
-                    pred_fake = dnet(fake_images.detach())
-                    d_loss_fake = lossfun(pred_fake, fake_labels)
-
-                    d_loss = d_loss_real + d_loss_fake
                     d_optimizer.zero_grad()
-                    d_loss.backward()
-                    d_optimizer.step()
+                    scaler_d.scale(d_loss).backward()
+                    scaler_d.step(d_optimizer)
+                    scaler_d.update()
 
-                    fake_images = gnet(torch.randn(batchsize, 100, 1, 1).to(device))
-                    pred_fake = dnet(fake_images)
-                    g_loss = lossfun(pred_fake, real_labels)
+                    with autocast(device_type='cuda'):
+                        fake_images = compiled_gnet(torch.randn(batchsize, 100, 1, 1).to(device))
+                        pred_fake = compiled_dnet(fake_images)
+                        g_loss = lossfun(pred_fake, real_labels)
 
                     g_optimizer.zero_grad()
-                    g_loss.backward()
-                    g_optimizer.step()
+                    scaler_g.scale(g_loss).backward()
+                    scaler_g.step(g_optimizer)
+                    scaler_g.update()
 
                     losses.append([d_loss.item(), g_loss.item()])
 

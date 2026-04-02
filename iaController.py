@@ -46,10 +46,10 @@ class iaView(discord.ui.View):
                 self.update_embed.start()
 
             async def on_epoch(epochi, img):
-                await self.message.edit(
-                    embed=await getEmbed(self.ia_type, self.ia_default_stats, True),
-                    attachments=[discord.File(img, filename="preview.png")]
-                )
+                file = discord.File(img, filename="preview.png")
+                embed = await getEmbed(self.ia_type, self.ia_default_stats, True)
+                embed.set_thumbnail(url="attachment://preview.png")
+                await self.message.edit(embed=embed, attachments=[file])
 
             await self.ia_gen["training"](self.ia_type, self.ia_default_stats, on_epoch)
 
@@ -127,11 +127,12 @@ class iaView(discord.ui.View):
             embed = await getEmbed(self.ia_type, self.ia_default_stats, True)
             await self.message.edit(embed=embed)
 
-async def getEmbed(ia_type, ia_default_stats, isTraining : bool):
+async def getEmbed(ia_type, ia_default_stats, isTraining : bool, image_url=None):
 
     titre = f"Ia générative : {ia_type}"
     if isTraining:
         description = "**Je m'entraine. . .**"
+        if image_url: description += f"\n\nExemple genré en **temps réel** :"
         footer = "(si tu veux générer une image, appuie d'abord sur 'SAVE'"
 
     else:
@@ -151,6 +152,9 @@ async def getEmbed(ia_type, ia_default_stats, isTraining : bool):
     embed.add_field(name="Images générées", value=str(images_generees), inline=True)
     embed.add_field(name="Epoch", value=str(ia_data['epoch']), inline=True)
     embed.set_footer(text=footer)
+
+    if image_url:
+        embed.set_image(url=image_url)
 
     return embed
 

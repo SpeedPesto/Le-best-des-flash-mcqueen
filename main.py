@@ -11,7 +11,13 @@ import os
 print(sys.executable)
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+try:
+    from google.colab import userdata
+    TOKEN = userdata.get("DISCORD_TOKEN")
+except ImportError:
+    from dotenv import load_dotenv
+    load_dotenv()
+    TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True

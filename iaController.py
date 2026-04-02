@@ -46,8 +46,10 @@ class iaView(discord.ui.View):
                 self.update_embed.start()
 
             async def on_epoch(epochi, img):
-                print("affiché")
-                await interaction.edit_original_response(embed=embed, file = discord.File(img, filename="preview.png"))
+                await self.message.edit(
+                    embed=await getEmbed(self.ia_type, self.ia_default_stats, True),
+                    attachments=[discord.File(img, filename="preview.png")]
+                )
 
             await self.ia_gen["training"](self.ia_type, self.ia_default_stats, on_epoch)
 

@@ -38,7 +38,7 @@ class iaView(discord.ui.View):
             await interaction.followup.send("Choisi une ia !", ephemeral=True)
         else :
             embed = await getEmbed(self.ia_type, self.ia_default_stats, True)
-            await interaction.self.message.edit(embed=embed)
+            await self.message.edit(embed=embed)
             self.message = await interaction.original_response()
 
             self.training_time[self.ia_type] = datetime.now()
@@ -58,7 +58,7 @@ class iaView(discord.ui.View):
                 self.update_embed.cancel()
             await self.ia_gen["stop_training"]()
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
-            await interaction.self.message.edit(embed=embed, attachments=None)
+            await self.message.edit(embed=embed, attachments=None)
             await interaction.followup.send("Training arrêté avec succès !", ephemeral=True)
 
     @discord.ui.button(label="Save", style=discord.ButtonStyle.green, custom_id="ia_save")
@@ -70,7 +70,7 @@ class iaView(discord.ui.View):
         else:
             await self.ia_gen["save"](self.ia_type)
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
-            await interaction.self.message.edit(embed=embed, attachments=None)
+            await self.message.edit(embed=embed, attachments=None)
 
             if self.update_embed.is_running():
                 self.update_embed.cancel()
@@ -100,7 +100,7 @@ class iaView(discord.ui.View):
             save_ia(data)
 
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
-            await interaction.self.message.edit(embed=embed)
+            await self.message.edit(embed=embed)
             await interaction.followup.send(f"Image généré avec succès par **{interaction.user.name}**!",file=file)
 
     @tasks.loop(seconds=5)

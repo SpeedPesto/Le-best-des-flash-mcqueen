@@ -43,25 +43,10 @@ class iaView(discord.ui.View):
 
             self.training_time[self.ia_type] = datetime.now()
 
-            async def on_epoch(epochi, img):
-                data = load_ia()
-                now = datetime.now()
+            if not self.update_embed.is_running():
+                self.update_embed.start()
 
-                join_time = self.training_time[self.ia_type]
-                time_in_channel = now - join_time
-                seconds = round(time_in_channel.total_seconds())
-
-                get_type_data(data, self.ia_type, self.ia_default_stats)["training_time"] += seconds
-                save_ia(data)
-
-                self.training_time[self.ia_type] = datetime.now()
-
-                file = discord.File(img, filename="preview.png")
-                embed = await getEmbed(self.ia_type, self.ia_default_stats, True)
-                embed.set_thumbnail(url="attachment://preview.png")
-                await self.message.edit(embed=embed, attachments=[file])
-
-            await self.ia_gen["training"](self.ia_type, self.ia_default_stats, on_epoch)
+            await self.ia_gen["training"](self.ia_type, self.ia_default_stats)
 
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red, custom_id="ia_stop")
     async def stop(self, interaction, button):
@@ -69,6 +54,8 @@ class iaView(discord.ui.View):
         if self.ia_type == None:
             await interaction.followup.send("Choisi une ia !", ephemeral=True)
         else:
+            if self.update_embed.is_running():
+                self.update_embed.cancel()
             await self.ia_gen["stop_training"]()
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
             await interaction.edit_original_response(embed=embed, attachments=None)
@@ -84,6 +71,9 @@ class iaView(discord.ui.View):
             await self.ia_gen["save"](self.ia_type)
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
             await interaction.edit_original_response(embed=embed, attachments=None)
+
+            if self.update_embed.is_running():
+                self.update_embed.cancel()
 
             data = load_ia()
             now = datetime.now()
@@ -113,12 +103,32 @@ class iaView(discord.ui.View):
             await interaction.edit_original_response(embed=embed)
             await interaction.followup.send(f"Image généré avec succès par **{interaction.user.name}**!",file=file)
 
+    @tasks.loop(seconds=5)
+    async def update_embed(self):
+        if self.message and self.ia_type:
+            data = load_ia()
+            now = datetime.now()
+
+            join_time = self.training_time[self.ia_type]
+            time_in_channel = now - join_time
+            seconds = round(time_in_channel.total_seconds())
+
+            get_type_data(data, self.ia_type, self.ia_default_stats)["training_time"] += seconds
+            save_ia(data)
+
+            self.training_time[self.ia_type] = datetime.now()
+
+            buffer = await self.ia_gen["generate"]()
+            embed = await getEmbed(self.ia_type, self.ia_default_stats, True, "attachment://preview.png")
+            file = discord.File(buffer, filename="preview.png")
+            await self.message.edit(embed=embed, attachments=[file])
+
 async def getEmbed(ia_type, ia_default_stats, isTraining : bool, image_url=None):
 
     titre = f"Ia générative : {ia_type}"
     if isTraining:
         description = "**Je m'entraine. . .**"
-        if image_url: description += "(Exemple genré en **temps réel** :)"
+        if image_url: description += "\n(Exemple genré en **temps réel** :)"
         footer = "Clique sur 'Generate' pour un aperçu de la puissance de Flash Mcqueen le goat"
 
     else:

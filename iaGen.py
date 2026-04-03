@@ -91,7 +91,7 @@ def setup_iaGen():
         print("images loaded")
         return TensorDataset(torch.cat(all_images))
 
-    async def training(ia_type, ia_default_stats, on_epoch=None):
+    async def training(ia_type, ia_default_stats):
         loop = asyncio.get_event_loop()
         state["is_training"] = True
         epochi = 0
@@ -144,15 +144,10 @@ def setup_iaGen():
 
                     losses.append([d_loss.item(), g_loss.item()])
 
-                if epochi % 2 == 0:
-                    if on_epoch:
-                        img = generate_sync()
-                        asyncio.run_coroutine_threadsafe(on_epoch(epochi, img), loop)
-
-                        ia_data = load_ia()
-                        get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 2
-                        save_ia(ia_data)
                 epochi += 1
+                ia_data = load_ia()
+                get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 1
+                save_ia(ia_data)
                 if epochi % 15 == 0:
                     asyncio.run_coroutine_threadsafe(save(ia_type, True), loop)
                 print(f'Epoch {epochi}')
@@ -204,21 +199,6 @@ def setup_iaGen():
         save_image(fake_image, buffer, format="PNG")
         buffer.seek(0)
 
-        gnet.train()
-        return buffer
-
-    def generate_sync():
-        gnet.eval()
-        with torch.no_grad():
-            noise = torch.randn(1, 100, 1, 1).to(device)
-            fake_image = gnet(noise)
-        fake_image = (fake_image + 1) / 2
-        fake_image = fake_image.squeeze(0).cpu()
-        import io
-        from torchvision.utils import save_image
-        buffer = io.BytesIO()
-        save_image(fake_image, buffer, format="PNG")
-        buffer.seek(0)
         gnet.train()
         return buffer
 

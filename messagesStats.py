@@ -148,12 +148,12 @@ def setup_messagesStats(bot):
 
         if user_id not in messages:
             messages[user_id] = {"messages": []}
-        messages[user_id]["messages"].append({
-            "content": message.content,
-            "date": message.created_at.isoformat(),
-            "channel": message.channel.name,
-            "id": message.id
-        })
+            messages[user_id]["messages"].append({
+                "content": message.content,
+                "date": message.created_at.isoformat(),
+                "channel": message.channel.name,
+                "id": message.id
+             })
 
 
         save_messages(messages)

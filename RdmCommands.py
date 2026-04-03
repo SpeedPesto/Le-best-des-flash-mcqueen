@@ -1,3 +1,6 @@
+import json
+import os
+
 import discord
 import random
 import asyncio
@@ -122,3 +125,29 @@ def setup_rdmCommand(bot):
         reponse = random.randrange(0, nbr)
 
         await interaction.response.send_message(f"{reponse}")
+
+    @bot.tree.command(name="note")
+    @discord.app_commands.describe(guest="Choisis un truc à noter")
+    async def note_cmd(interaction: discord.Interaction, guest: str):
+
+        def load_note():
+            if os.path.exists("note.json"):
+                with open("note.json", "r") as f:
+                    return json.load(f)
+            else:
+                return {}
+
+        def save_note(note):
+            with open("note.json", "w") as f:
+                json.dump(note, f, indent=4)
+
+        note = load_note()
+        rdm_num = random.randrange(0, 100)
+
+        if note.get(guest) is not None:
+            rdm_num = note[guest]
+        else:
+            note[guest] = rdm_num
+            save_note(note)
+
+        await interaction.response.send_message(f"{guest} : {rdm_num} / 100")

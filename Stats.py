@@ -99,7 +99,7 @@ def setup_stats(bot):
             join_times[user_id] = datetime.now().isoformat()
 
         if after.channel == None:
-            if join_times is None:
+            if join_times[user_id] is None:
                 print(f"Temps non compté pour {member.name}")
                 return
 

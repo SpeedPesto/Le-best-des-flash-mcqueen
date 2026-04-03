@@ -1,7 +1,7 @@
 {
     "chien": {
-        "training_time": 1271,
+        "training_time": 1336,
         "generate_num": 2,
-        "epoch": 126
+        "epoch": 140
     }
 }

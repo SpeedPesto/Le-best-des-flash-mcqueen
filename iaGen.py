@@ -161,10 +161,12 @@ def setup_iaGen():
 
     def load_ia():
         if os.path.exists("ia.json"):
-            with open("ia.json", "r") as f:
-                return json.load(f)
-        else:
-            return {}
+            try:
+                with open("ia.json", "r") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+        return {}
 
     def save_ia(ia):
         with open("ia.json", "w") as f:

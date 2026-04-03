@@ -150,7 +150,7 @@ async def getEmbed(ia_type, ia_default_stats, isTraining : bool, image_url=None)
     embed.set_footer(text=footer)
 
     if image_url:
-        embed.set_image(url=image_url)
+        embed.set_thumbnail(url=image_url)
 
     return embed
 

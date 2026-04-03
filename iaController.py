@@ -161,9 +161,13 @@ def load_ia():
     else:
         return {}
 
-def save_ia(ia, ):
-    with open("ia.json", "w") as f:
-        json.dump(ia, f, indent=4)
+import threading
+_lock = threading.Lock()
+
+def save_ia(ia):
+    with _lock:
+        with open("ia.json", "w") as f:
+            json.dump(ia, f, indent=4)
 
 def get_type_data(data, ia_type, ia_default_stats):
     if ia_type not in data:

@@ -148,12 +148,13 @@ def setup_iaGen():
                     if on_epoch:
                         img = generate_sync()
                         asyncio.run_coroutine_threadsafe(on_epoch(epochi, img), loop)
+
+                        ia_data = load_ia()
+                        get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 2
+                        save_ia(ia_data)
                 epochi += 1
-                ia_data = load_ia()
-                get_type_data(ia_data, ia_type, ia_default_stats)["epoch"] += 1
-                save_ia(ia_data)
                 if epochi % 15 == 0:
-                    asyncio.run_coroutine_threadsafe(save(ia_type), loop)
+                    asyncio.run_coroutine_threadsafe(save(ia_type, True), loop)
                 print(f'Epoch {epochi}')
 
         await asyncio.to_thread(train_step)
@@ -177,14 +178,13 @@ def setup_iaGen():
     async def stop_training():
         state["is_training"] = False
 
-    async def save(ia_type):
+    async def save(ia_type, automatic = False):
         path = "models/"
         os.makedirs(path, exist_ok=True)
 
         torch.save(gnet.state_dict(), path + f"gnet_{ia_type}.pth")
         torch.save(dnet.state_dict(), path + f"dnet_{ia_type}.pth")
-
-        state["is_training"] = False
+        if not automatic:state["is_training"] = False
         print("Modèles sauvegardés !")
 
     async def generate():

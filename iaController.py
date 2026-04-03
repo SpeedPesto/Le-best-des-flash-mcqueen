@@ -71,7 +71,7 @@ class iaView(discord.ui.View):
         else:
             await self.ia_gen["stop_training"]()
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
-            await interaction.edit_original_response(embed=embed)
+            await interaction.edit_original_response(embed=embed, attachments=None)
             await interaction.followup.send("Training arrêté avec succès !", ephemeral=True)
 
     @discord.ui.button(label="Save", style=discord.ButtonStyle.green, custom_id="ia_save")
@@ -83,7 +83,7 @@ class iaView(discord.ui.View):
         else:
             await self.ia_gen["save"](self.ia_type)
             embed = await getEmbed(self.ia_type, self.ia_default_stats, False)
-            await interaction.edit_original_response(embed=embed)
+            await interaction.edit_original_response(embed=embed, attachments=None)
 
             data = load_ia()
             now = datetime.now()

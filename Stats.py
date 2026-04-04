@@ -161,8 +161,14 @@ def get_user_data(data, user_id):
 
 def get_server_data(data):
     if "server" not in data:
-        data["server"] = {"duos": {}, "trios": {}, "vocal_channels": {}, "message_hours": {}, "message_days": {}}
-    return data["server"]
+        data["server"] = {}
+    server = data["server"]
+    server.setdefault("duos", {})
+    server.setdefault("trios", {})
+    server.setdefault("vocal_channels", {})
+    server.setdefault("message_hours", {})
+    server.setdefault("message_days", {})
+    return server
 
 def load_stats():
     db = get_db()

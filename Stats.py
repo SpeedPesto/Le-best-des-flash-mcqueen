@@ -13,14 +13,14 @@ class StatsView(discord.ui.View):
     @discord.ui.select(
         placeholder="Choisir une stat...",
         options=[
-            discord.SelectOption(label="Messages",                    value="message_count"),
-            discord.SelectOption(label="Temps vocal",                 value="vocal_time"),
-            discord.SelectOption(label="Reactions",                   value="reaction_count"),
-            discord.SelectOption(label="Duo le plus ensemble",        value="top_duo"),
-            discord.SelectOption(label="Trio le plus ensemble",       value="top_trio"),
-            discord.SelectOption(label="Salon vocal le plus utilisé", value="top_vocal_channel"),
-            discord.SelectOption(label="Heure la plus active",        value="top_hour"),
-            discord.SelectOption(label="Jour le plus actif",          value="top_day"),
+            discord.SelectOption(label="Nombre de message",             value="message_count"),
+            discord.SelectOption(label="Temps vocal",                   value="vocal_time"),
+            discord.SelectOption(label="Reactions",                     value="reaction_count"),
+            discord.SelectOption(label="Duo le plus ensemble",          value="top_duo"),
+            discord.SelectOption(label="Trio le plus ensemble",         value="top_trio"),
+            discord.SelectOption(label="Salon vocal le plus utilisé",   value="top_vocal_channel"),
+            discord.SelectOption(label="Heure la plus active",          value="top_hour"),
+            discord.SelectOption(label="Jour le plus actif",            value="top_day"),
         ]
     )
     async def select_stat(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -39,7 +39,7 @@ async def getEmbed(bot, data, author_id, stat):
         if stat == "message_count":
             titre, clé, unité = "Top 10 : Nombre de messages", "message_count", "messages"
         elif stat == "vocal_time":
-            titre, clé, unité = "Top 10 : Temps en voc", "vocal_time", "s"
+            titre, clé, unité = "Top 10 : Temps en vok", "vocal_time", "s"
         elif stat == "reaction_count":
             titre, clé, unité = "Top 10 : Réactions", "reaction_count", "réactions"
 
@@ -125,7 +125,7 @@ async def getEmbed(bot, data, author_id, stat):
         for h, count in top5:
             description += f"**{h}h** — {count} messages\n"
 
-        return discord.Embed(title="⚡ Heure la plus active du serveur", description=description, color=0xff0000)
+        return discord.Embed(title="Heure la plus active du serveur", description=description, color=0xff0000)
 
     # -- Jour le plus actif -----------------------------------------------------
     if stat == "top_day":

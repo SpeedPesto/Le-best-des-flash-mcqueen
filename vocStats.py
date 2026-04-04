@@ -19,15 +19,15 @@ class vocalStatView(discord.ui.View):
     @discord.ui.select(
         placeholder="Choisir une stat...",
         options=[
-            discord.SelectOption(label="Temps total",             value="total_time"),
-            discord.SelectOption(label="Salon le plus fréquenté", value="most_pop_channel"),
-            discord.SelectOption(label="Heure moyenne de co",     value="heure_moy"),
-            discord.SelectOption(label="Durée moyenne d'une session", value="moy_length"),
-            discord.SelectOption(label="Nombre de sessions",      value="session_count"),
-            discord.SelectOption(label="Jour le plus actif",      value="most_pop_day"),
-            discord.SelectOption(label="Session la plus longue",  value="longest_session"),
-            discord.SelectOption(label="Streak de jours",         value="streak"),
-            discord.SelectOption(label="Historique des sessions", value="history"),
+            discord.SelectOption(label="Temps total",                   value="total_time"),
+            discord.SelectOption(label="Salon le plus fréquenté",       value="most_pop_channel"),
+            discord.SelectOption(label="Heure moyenne de co",           value="heure_moy"),
+            discord.SelectOption(label="Durée moyenne d'une session",   value="moy_length"),
+            discord.SelectOption(label="Nombre de sessions",            value="session_count"),
+            discord.SelectOption(label="Jour le plus actif",            value="most_pop_day"),
+            discord.SelectOption(label="Session la plus longue",        value="longest_session"),
+            discord.SelectOption(label="Streak de jours",               value="streak"),
+            discord.SelectOption(label="Historique des sessions",       value="history"),
         ]
     )
     async def select_stat(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -171,7 +171,7 @@ async def getEmbed(bot, data, stat, user_id, display_name):
             else:
                 break
 
-        desc = f"🔥 Streak actuel : **{streak_actuel} jour{'s' if streak_actuel > 1 else ''}**\n🏆 Meilleur streak : **{max_streak} jour{'s' if max_streak > 1 else ''}**"
+        desc = f"Streak actuel : **{streak_actuel} jour{'s' if streak_actuel > 1 else ''}**\nMeilleur streak : **{max_streak} jour{'s' if max_streak > 1 else ''}**"
 
     # -- Historique -------------------------------------------------------------
     elif stat == "history":

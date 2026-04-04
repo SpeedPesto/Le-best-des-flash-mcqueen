@@ -267,16 +267,16 @@ def setup_stats(bot):
 
 async def handle_stats_message(message):
     data = load_stats()
-
     user_id = str(message.author.id)
     server = get_server_data(data)
 
     get_user_data(data, user_id)["message_count"] += 1
+    print(f"[STATS] user {user_id} → message_count = {data['users'][user_id]['message_count']}")
 
     hour = str(message.created_at.hour)
     day = str(message.created_at.weekday())
-
     server["message_hours"][hour] = server["message_hours"].get(hour, 0) + 1
     server["message_days"][day] = server["message_days"].get(day, 0) + 1
 
     save_stats(data)
+    print(f"[STATS] save_stats terminé")

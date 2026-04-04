@@ -11,6 +11,8 @@ from vocStats import setup_vocalStats
 import os
 import firebase_admin
 from firebase_admin import credentials, firestore
+from Stats import handle_stats_message
+from messagesStats import handle_messages_stats
 print(sys.executable)
 
 load_dotenv()
@@ -32,6 +34,16 @@ setup_stats(bot)
 setup_messagesStats(bot)
 setup_iaController(bot)
 setup_vocalStats(bot)
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    await handle_stats_message(message)
+    await handle_messages_stats(message)
+
+    await bot.process_commands(message)
 
 #----------------------------------------------------------------------------------------------#
 

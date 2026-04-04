@@ -143,43 +143,41 @@ async def getEmbed(bot, data, author_id, stat):
 
     return discord.Embed(title="Stat inconnue", color=0xff0000)
 
+db = firestore.client()
+default_user_stats = {"message_count": 0, "vocal_time": 0, "reaction_count": 0}
+def get_user_data(data, user_id):
+    if "users" not in data:
+        data["users"] = {}
+    if user_id not in data["users"]:
+        data["users"][user_id] = default_user_stats.copy()
+    return data["users"][user_id]
+
+def get_server_data(data):
+    if "server" not in data:
+        data["server"] = {"duos": {}, "trios": {}, "vocal_channels": {}, "message_hours": {}, "message_days": {}}
+    return data["server"]
+
+def load_stats():
+    data = {}
+
+    users_docs = db.collection("stats").document("users").collection("data").stream()
+    data["users"] = {doc.id: doc.to_dict() for doc in users_docs}
+
+    server_doc = db.collection("stats").document("server").get()
+    data["server"] = server_doc.to_dict() if server_doc.exists else {}
+
+    return data
+
+def save_stats(data):
+    if "users" in data:
+        for user_id, stats in data["users"].items():
+            db.collection("stats").document("users").collection("data").document(user_id).set(stats)
+
+    if "server" in data:
+        db.collection("stats").document("server").set(data["server"])
 
 def setup_stats(bot):
-    db            = firestore.client()
     channel_users = {}
-
-    default_user_stats = {"message_count": 0, "vocal_time": 0, "reaction_count": 0}
-
-    def get_user_data(data, user_id):
-        if "users" not in data:
-            data["users"] = {}
-        if user_id not in data["users"]:
-            data["users"][user_id] = default_user_stats.copy()
-        return data["users"][user_id]
-
-    def get_server_data(data):
-        if "server" not in data:
-            data["server"] = {"duos": {}, "trios": {}, "vocal_channels": {}, "message_hours": {}, "message_days": {}}
-        return data["server"]
-
-    def load_stats():
-        data = {}
-
-        users_docs = db.collection("stats").document("users").collection("data").stream()
-        data["users"] = {doc.id: doc.to_dict() for doc in users_docs}
-
-        server_doc = db.collection("stats").document("server").get()
-        data["server"] = server_doc.to_dict() if server_doc.exists else {}
-
-        return data
-
-    def save_stats(data):
-        if "users" in data:
-            for user_id, stats in data["users"].items():
-                db.collection("stats").document("users").collection("data").document(user_id).set(stats)
-
-        if "server" in data:
-            db.collection("stats").document("server").set(data["server"])
 
     def flush_channel(data, channel_id, leaving_user_id=None):
         if channel_id not in channel_users or not channel_users[channel_id]:
@@ -219,23 +217,6 @@ def setup_stats(bot):
                 channel_users[channel_id][uid] = now
         if leaving_user_id and leaving_user_id in channel_users[channel_id]:
             del channel_users[channel_id][leaving_user_id]
-
-    @bot.event
-    async def on_message(message):
-        if message.author.bot: return
-
-        data    = load_stats()
-        user_id = str(message.author.id)
-        server  = get_server_data(data)
-
-        get_user_data(data, user_id)["message_count"] += 1
-
-        hour = str(message.created_at.hour)
-        day  = str(message.created_at.weekday())
-        server["message_hours"][hour] = server["message_hours"].get(hour, 0) + 1
-        server["message_days"][day]   = server["message_days"].get(day, 0) + 1
-
-        save_stats(data)
 
     @bot.event
     async def on_voice_state_update(member, before, after):
@@ -283,3 +264,19 @@ def setup_stats(bot):
         data  = load_stats()
         embed = await getEmbed(bot, data, interaction.user.id, stat)
         await interaction.followup.send(embed=embed, view=StatsView(bot, load_stats))
+
+async def handle_stats_message(message):
+    data = load_stats()
+
+    user_id = str(message.author.id)
+    server = get_server_data(data)
+
+    get_user_data(data, user_id)["message_count"] += 1
+
+    hour = str(message.created_at.hour)
+    day = str(message.created_at.weekday())
+
+    server["message_hours"][hour] = server["message_hours"].get(hour, 0) + 1
+    server["message_days"][day] = server["message_days"].get(day, 0) + 1
+
+    save_stats(data)

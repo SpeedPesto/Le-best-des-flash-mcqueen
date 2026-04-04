@@ -48,7 +48,7 @@ async def getEmbed(bot, data, stat, user_id, display_name):
     messages = data[user_id]["messages"]
 
     # -- Mot le plus écrit ------------------------------------------------------
-    if stat == "-most_pop_world":
+    if stat == "most_pop_world":
         titre = f"Mot le plus écrit de {display_name}"
         tous_les_mots = []
         for msg in messages:
@@ -192,38 +192,22 @@ def generate_hour_graph(toutes_les_heures):
     plt.close()
     return buf
 
+db = firestore.client()
+stats_choix = ["most_pop_world", "heure_moy", "most_pop_channel", "most_pop_day", "moy_length", "total_words", "longest_msg", "first_msg", "streak"]
+
+def load_messages():
+    docs = db.collection("messages").stream()
+    return {doc.id: doc.to_dict() for doc in docs}
+
+def save_message(user_id, message):
+    doc_ref = db.collection("messages").document(user_id)
+    doc = doc_ref.get()
+    messages = doc.to_dict().get("messages", []) if doc.exists else []
+    messages.append(message)
+    doc_ref.set({"messages": messages})
+
 
 def setup_messagesStats(bot):
-    db = firestore.client()
-    stats_choix = ["-most_pop_world", "heure_moy", "most_pop_channel", "most_pop_day", "moy_length", "total_words", "longest_msg", "first_msg", "streak"]
-
-    def load_messages():
-        docs = db.collection("messages").stream()
-        return {doc.id: doc.to_dict() for doc in docs}
-
-    def save_message(user_id, message):
-        doc_ref  = db.collection("messages").document(user_id)
-        doc      = doc_ref.get()
-        messages = doc.to_dict().get("messages", []) if doc.exists else []
-        messages.append(message)
-        doc_ref.set({"messages": messages})
-
-    @bot.event
-    async def on_message(message):
-        if message.author.bot: return
-        if message.content == "": return
-
-        user_id = str(message.author.id)
-
-        save_message(user_id, {
-            "content":    message.content,
-            "date":       message.created_at.isoformat(),
-            "channel":    message.channel.name,
-            "id":         message.id,
-            "word_count": len(message.content.split()),
-            "char_count": len(message.content),
-            "weekday":    message.created_at.weekday()
-        })
 
     async def messages_user_autocomplet(interaction: discord.Interaction, current: str):
         choix = [member.display_name for member in interaction.guild.members if not member.bot]
@@ -250,3 +234,19 @@ def setup_messagesStats(bot):
             view            = messStatView(bot, load_messages, user_id, user)
             if file: await interaction.followup.send(embed=embed, file=file, view=view)
             else:    await interaction.followup.send(embed=embed, view=view)
+
+async def handle_messages_stats(message):
+    if message.content == "" or message.author.bot:
+        return
+
+    user_id = str(message.author.id)
+
+    save_message(user_id, {
+        "content": message.content,
+        "date": message.created_at.isoformat(),
+        "channel": message.channel.name,
+        "id": message.id,
+        "word_count": len(message.content.split()),
+        "char_count": len(message.content),
+        "weekday": message.created_at.weekday()
+    })

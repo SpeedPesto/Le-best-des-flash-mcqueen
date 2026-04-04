@@ -8,6 +8,7 @@ from iaController import setup_iaController
 import sys
 from dotenv import load_dotenv
 import os
+import gdown
 print(sys.executable)
 
 load_dotenv()
@@ -24,6 +25,26 @@ setup_YoutubeAudio(bot)
 setup_stats(bot)
 setup_messagesStats(bot)
 setup_iaController(bot)
+
+os.makedirs("models", exist_ok=True)
+
+urls = [
+    "https://drive.google.com/file/d/1SkNOdgzLNqOQveKCsOGTcEZO0c4mM4nx/view",
+    "https://drive.google.com/file/d/1zV4eieefZvvsfNF3cSBNjxqUqECB40Hx/view"
+]
+
+for url in urls:
+    file_id = url.split("/d/")[1].split("/")[0]
+
+    output_path = f"models/{file_id}.pth"
+
+    gdown.download(
+        f"https://drive.google.com/uc?id={file_id}",
+        output_path,
+        quiet=False
+    )
+
+    print(f"{output_path} téléchargé")
 
 
 

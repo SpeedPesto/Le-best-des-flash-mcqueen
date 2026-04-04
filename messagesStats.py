@@ -1,10 +1,9 @@
 import datetime
 import discord
-import json
-import os
 import matplotlib.pyplot as plt
 import io
 from collections import Counter
+from firebase_admin import firestore
 
 JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
@@ -194,32 +193,29 @@ def generate_hour_graph(toutes_les_heures):
     return buf
 
 
-def load_messages():
-    if os.path.exists("messages.json"):
-        with open("messages.json", "r") as f:
-            return json.load(f)
-    return {}
-
-def save_messages(messages):
-    with open("messages.json", "w") as f:
-        json.dump(messages, f, indent=4)
-
-
 def setup_messagesStats(bot):
+    db = firestore.client()
     stats_choix = ["-most_pop_world", "heure_moy", "most_pop_channel", "most_pop_day", "moy_length", "total_words", "longest_msg", "first_msg", "streak"]
+
+    def load_messages():
+        docs = db.collection("messages").stream()
+        return {doc.id: doc.to_dict() for doc in docs}
+
+    def save_message(user_id, message):
+        doc_ref  = db.collection("messages").document(user_id)
+        doc      = doc_ref.get()
+        messages = doc.to_dict().get("messages", []) if doc.exists else []
+        messages.append(message)
+        doc_ref.set({"messages": messages})
 
     @bot.event
     async def on_message(message):
         if message.author.bot: return
         if message.content == "": return
 
-        messages = load_messages()
-        user_id  = str(message.author.id)
+        user_id = str(message.author.id)
 
-        if user_id not in messages:
-            messages[user_id] = {"messages": []}
-
-        messages[user_id]["messages"].append({
+        save_message(user_id, {
             "content":    message.content,
             "date":       message.created_at.isoformat(),
             "channel":    message.channel.name,
@@ -228,8 +224,6 @@ def setup_messagesStats(bot):
             "char_count": len(message.content),
             "weekday":    message.created_at.weekday()
         })
-
-        save_messages(messages)
 
     async def messages_user_autocomplet(interaction: discord.Interaction, current: str):
         choix = [member.display_name for member in interaction.guild.members if not member.bot]

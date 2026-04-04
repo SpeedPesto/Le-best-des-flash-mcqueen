@@ -1,10 +1,9 @@
 import datetime
 import discord
-import json
-import os
 import matplotlib.pyplot as plt
 import io
 from collections import Counter
+from firebase_admin import firestore
 
 JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
@@ -196,31 +195,28 @@ async def getEmbed(bot, data, stat, user_id, display_name):
     return embed, file
 
 
-def load_vocal():
-    if os.path.exists("vocal.json"):
-        with open("vocal.json", "r") as f:
-            return json.load(f)
-    return {}
-
-def save_vocal(data):
-    with open("vocal.json", "w") as f:
-        json.dump(data, f, indent=4)
-
-
 def setup_vocalStats(bot):
-    join_times  = {}
+    db            = firestore.client()
+    join_times    = {}
     join_channels = {}
-    stats_choix = ["total_time", "most_pop_channel", "heure_moy", "moy_length", "session_count", "most_pop_day", "longest_session", "streak", "history"]
+    stats_choix   = ["total_time", "most_pop_channel", "heure_moy", "moy_length", "session_count", "most_pop_day", "longest_session", "streak", "history"]
+
+    def load_vocal():
+        docs = db.collection("vocal").stream()
+        return {doc.id: doc.to_dict() for doc in docs}
+
+    def save_vocal_session(user_id, session):
+        doc_ref  = db.collection("vocal").document(user_id)
+        doc      = doc_ref.get()
+        sessions = doc.to_dict().get("sessions", []) if doc.exists else []
+        sessions.append(session)
+        doc_ref.set({"sessions": sessions})
 
     @bot.event
     async def on_voice_state_update(member, before, after):
         if member.bot: return
 
         user_id = str(member.id)
-        data    = load_vocal()
-
-        if user_id not in data:
-            data[user_id] = {"sessions": []}
 
         # Connexion
         if before.channel is None and after.channel is not None:
@@ -238,13 +234,11 @@ def setup_vocalStats(bot):
             if duration < 5:
                 return
 
-            data[user_id]["sessions"].append({
+            save_vocal_session(user_id, {
                 "joined_at": datetime.datetime.now().isoformat(),
                 "channel":   channel,
                 "duration":  duration,
             })
-
-            save_vocal(data)
 
         # Changement de salon
         elif before.channel is not None and after.channel is not None and before.channel != after.channel:
@@ -253,12 +247,11 @@ def setup_vocalStats(bot):
                 channel  = join_channels.get(user_id, before.channel.name)
 
                 if duration >= 5:
-                    data[user_id]["sessions"].append({
+                    save_vocal_session(user_id, {
                         "joined_at": join_times[user_id].isoformat(),
                         "channel":   channel,
                         "duration":  duration,
                     })
-                    save_vocal(data)
 
             join_times[user_id]    = datetime.datetime.now()
             join_channels[user_id] = after.channel.name

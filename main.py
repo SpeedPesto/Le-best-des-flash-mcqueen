@@ -7,11 +7,18 @@ from messagesStats import setup_messagesStats
 from iaController import setup_iaController
 import sys
 from dotenv import load_dotenv
+from vocStats import setup_vocalStats
 import os
+import firebase_admin
+from firebase_admin import credentials, firestore
 print(sys.executable)
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
+
+cred = credentials.Certificate("firebase-key.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -24,6 +31,7 @@ setup_YoutubeAudio(bot)
 setup_stats(bot)
 setup_messagesStats(bot)
 setup_iaController(bot)
+setup_vocalStats(bot)
 
 #----------------------------------------------------------------------------------------------#
 

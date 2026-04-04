@@ -1,8 +1,7 @@
 import discord
-import json
-import os
 from datetime import datetime
 from itertools import combinations
+from firebase_admin import firestore
 
 class StatsView(discord.ui.View):
     def __init__(self, bot, load_stats):
@@ -67,13 +66,13 @@ async def getEmbed(bot, data, author_id, stat):
         if not duos:
             return discord.Embed(title="Duo le plus ensemble", description="Pas encore de données.", color=0xff0000)
 
-        top        = sorted(duos.items(), key=lambda x: x[1], reverse=True)[:5]
+        top         = sorted(duos.items(), key=lambda x: x[1], reverse=True)[:5]
         description = ""
         for i, (pair, seconds) in enumerate(top):
-            ids        = pair.split("_")
-            u1         = await bot.fetch_user(int(ids[0]))
-            u2         = await bot.fetch_user(int(ids[1]))
-            h, m       = seconds // 3600, (seconds % 3600) // 60
+            ids  = pair.split("_")
+            u1   = await bot.fetch_user(int(ids[0]))
+            u2   = await bot.fetch_user(int(ids[1]))
+            h, m = seconds // 3600, (seconds % 3600) // 60
             description += f"**{i+1}.** {u1.name} & {u2.name} — **{h}h {m}m**\n"
 
         return discord.Embed(title="Duo les plus ensemble", description=description, color=0xff0000)
@@ -87,9 +86,9 @@ async def getEmbed(bot, data, author_id, stat):
         top         = sorted(trios.items(), key=lambda x: x[1], reverse=True)[:5]
         description = ""
         for i, (trio, seconds) in enumerate(top):
-            ids        = trio.split("_")
-            users      = [await bot.fetch_user(int(uid)) for uid in ids]
-            h, m       = seconds // 3600, (seconds % 3600) // 60
+            ids   = trio.split("_")
+            users = [await bot.fetch_user(int(uid)) for uid in ids]
+            h, m  = seconds // 3600, (seconds % 3600) // 60
             description += f"**{i+1}.** {' & '.join(u.name for u in users)} — **{h}h {m}m**\n"
 
         return discord.Embed(title="Trios les plus ensemble", description=description, color=0xff0000)
@@ -104,7 +103,7 @@ async def getEmbed(bot, data, author_id, stat):
         description = ""
         for i, (channel_name, seconds) in enumerate(top):
             channel  = discord.utils.get(bot.get_all_channels(), name=channel_name)
-            chan_str = f"<#{channel.id}>" if channel else f"#{channel_name}"
+            chan_str  = f"<#{channel.id}>" if channel else f"#{channel_name}"
             h, m     = seconds // 3600, (seconds % 3600) // 60
             description += f"**{i+1}.** {chan_str} — **{h}h {m}m**\n"
 
@@ -146,6 +145,7 @@ async def getEmbed(bot, data, author_id, stat):
 
 
 def setup_stats(bot):
+    db            = firestore.client()
     channel_users = {}
 
     default_user_stats = {"message_count": 0, "vocal_time": 0, "reaction_count": 0}
@@ -163,14 +163,23 @@ def setup_stats(bot):
         return data["server"]
 
     def load_stats():
-        if os.path.exists("stats.json"):
-            with open("stats.json", "r") as f:
-                return json.load(f)
-        return {}
+        data = {}
+
+        users_docs = db.collection("stats").document("users").collection("data").stream()
+        data["users"] = {doc.id: doc.to_dict() for doc in users_docs}
+
+        server_doc = db.collection("stats").document("server").get()
+        data["server"] = server_doc.to_dict() if server_doc.exists else {}
+
+        return data
 
     def save_stats(data):
-        with open("stats.json", "w") as f:
-            json.dump(data, f, indent=4)
+        if "users" in data:
+            for user_id, stats in data["users"].items():
+                db.collection("stats").document("users").collection("data").document(user_id).set(stats)
+
+        if "server" in data:
+            db.collection("stats").document("server").set(data["server"])
 
     def flush_channel(data, channel_id, leaving_user_id=None):
         if channel_id not in channel_users or not channel_users[channel_id]:

@@ -143,7 +143,14 @@ async def getEmbed(bot, data, author_id, stat):
 
     return discord.Embed(title="Stat inconnue", color=0xff0000)
 
-db = firestore.client()
+db = None
+
+def get_db():
+    global db
+    if db is None:
+        db = firestore.client()
+    return db
+
 default_user_stats = {"message_count": 0, "vocal_time": 0, "reaction_count": 0}
 def get_user_data(data, user_id):
     if "users" not in data:
@@ -158,6 +165,7 @@ def get_server_data(data):
     return data["server"]
 
 def load_stats():
+    db = get_db()
     data = {}
 
     users_docs = db.collection("stats").document("users").collection("data").stream()
@@ -169,6 +177,7 @@ def load_stats():
     return data
 
 def save_stats(data):
+    db = get_db()
     if "users" in data:
         for user_id, stats in data["users"].items():
             db.collection("stats").document("users").collection("data").document(user_id).set(stats)
@@ -271,7 +280,6 @@ async def handle_stats_message(message):
     server = get_server_data(data)
 
     get_user_data(data, user_id)["message_count"] += 1
-    print(f"[STATS] user {user_id} → message_count = {data['users'][user_id]['message_count']}")
 
     hour = str(message.created_at.hour)
     day = str(message.created_at.weekday())
@@ -279,4 +287,3 @@ async def handle_stats_message(message):
     server["message_days"][day] = server["message_days"].get(day, 0) + 1
 
     save_stats(data)
-    print(f"[STATS] save_stats terminé")

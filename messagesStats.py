@@ -192,14 +192,22 @@ def generate_hour_graph(toutes_les_heures):
     plt.close()
     return buf
 
-db = firestore.client()
+db = None
+
+def get_db():
+    global db
+    if db is None:
+        db = firestore.client()
+    return db
 stats_choix = ["most_pop_world", "heure_moy", "most_pop_channel", "most_pop_day", "moy_length", "total_words", "longest_msg", "first_msg", "streak"]
 
 def load_messages():
+    db = get_db()
     docs = db.collection("messages").stream()
     return {doc.id: doc.to_dict() for doc in docs}
 
 def save_message(user_id, message):
+    db = get_db()
     doc_ref = db.collection("messages").document(user_id)
     doc = doc_ref.get()
     messages = doc.to_dict().get("messages", []) if doc.exists else []

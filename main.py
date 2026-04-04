@@ -37,6 +37,7 @@ setup_vocalStats(bot)
 
 @bot.event
 async def on_message(message):
+    print("ON MESSAGE DÉCLENCHÉ")
     if message.author.bot:
         return
 

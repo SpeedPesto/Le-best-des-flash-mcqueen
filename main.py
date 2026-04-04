@@ -8,11 +8,10 @@ from iaController import setup_iaController
 import sys
 from dotenv import load_dotenv
 import os
-import gdown
 print(sys.executable)
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True

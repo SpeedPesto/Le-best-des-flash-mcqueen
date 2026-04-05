@@ -239,6 +239,13 @@ def setup_YoutubeAudio(bot):
             'no_warnings': True,
             'noplaylist': True,
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
+            'extractor_args': {
+                'youtube': {
+                    'po_token': [
+                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
+                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                }
+            },
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -278,6 +285,13 @@ def setup_YoutubeAudio(bot):
             'no_warnings': True,
             'ignoreerrors': True,
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
+            'extractor_args': {
+                'youtube': {
+                    'po_token': [
+                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
+                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                }
+            },
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -330,6 +344,13 @@ def setup_YoutubeAudio(bot):
             'no_warnings': True,
             'ignoreerrors': True,
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
+            'extractor_args': {
+                'youtube': {
+                    'po_token': [
+                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
+                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                }
+            },
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:

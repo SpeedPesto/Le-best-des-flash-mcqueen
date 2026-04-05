@@ -241,9 +241,8 @@ def setup_YoutubeAudio(bot):
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
             'extractor_args': {
                 'youtube': {
-                    'po_token': [
-                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
-                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                    'po_token': ['web+Mng2bvbp5vtuiTZSQxzIcvCzox_KU0nnS24xXk8J6Qt4_H1t7oPM98DIhudjz1MuokmihdPiYXv2b997Ek-gSoAfdjXz6uThWbUl51qr5FIoxmHc8WMi7MMWxveW_SfTEk3kbt9GIJOvim0h6g1gUsJ0CxcVoJ9M31E='],
+                    'visitor_data': ['CgszSGk4SlNhVUs3TSj44svOBjIKCgJVUxIEGgAgFg%3D%3D'],
                 }
             },
         }
@@ -287,9 +286,8 @@ def setup_YoutubeAudio(bot):
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
             'extractor_args': {
                 'youtube': {
-                    'po_token': [
-                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
-                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                    'po_token': ['web+Mng2bvbp5vtuiTZSQxzIcvCzox_KU0nnS24xXk8J6Qt4_H1t7oPM98DIhudjz1MuokmihdPiYXv2b997Ek-gSoAfdjXz6uThWbUl51qr5FIoxmHc8WMi7MMWxveW_SfTEk3kbt9GIJOvim0h6g1gUsJ0CxcVoJ9M31E='],
+                    'visitor_data': ['CgszSGk4SlNhVUs3TSj44svOBjIKCgJVUxIEGgAgFg%3D%3D'],
                 }
             },
         }
@@ -346,9 +344,8 @@ def setup_YoutubeAudio(bot):
             'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
             'extractor_args': {
                 'youtube': {
-                    'po_token': [
-                        'web+Mniiphl15coX7qKazeNoCBrexqXEIqOUMT3P3JwzSANFsY-46uQYnURmn7VqNjiCTDqpr7inGm0iMm6J1XjgY66kqMKsKggKHpxB0-UzDH2DHAFXeULAIQVSzkDA8sEsKzWLfaVBYhGWb9oRvdIILX7XKWrM7egK8d0='],
-                    'visitor_data': ['Cgs3U1VUdUxDTkZndyi4kcfOBjIKCgJERRIEEgAgbA%3D%3D'],
+                    'po_token': ['web+Mng2bvbp5vtuiTZSQxzIcvCzox_KU0nnS24xXk8J6Qt4_H1t7oPM98DIhudjz1MuokmihdPiYXv2b997Ek-gSoAfdjXz6uThWbUl51qr5FIoxmHc8WMi7MMWxveW_SfTEk3kbt9GIJOvim0h6g1gUsJ0CxcVoJ9M31E='],
+                    'visitor_data': ['CgszSGk4SlNhVUs3TSj44svOBjIKCgJVUxIEGgAgFg%3D%3D'],
                 }
             },
         }

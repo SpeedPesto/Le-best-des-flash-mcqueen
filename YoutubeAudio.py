@@ -234,7 +234,7 @@ def setup_YoutubeAudio(bot):
         state = get_state(guild_id)
 
         options = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=webm]\/bestaudio\/best',
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
@@ -273,7 +273,7 @@ def setup_YoutubeAudio(bot):
         state = get_state(guild_id)
 
         options = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=webm]\/bestaudio\/best',
             'quiet': True,
             'no_warnings': True,
             'ignoreerrors': True,
@@ -325,7 +325,7 @@ def setup_YoutubeAudio(bot):
         state = get_state(guild_id)
 
         options = {
-            'format': 'bestaudio/best',
+            'format': 'bestaudio[ext=webm]\/bestaudio\/best',
             'quiet': True,
             'no_warnings': True,
             'ignoreerrors': True,

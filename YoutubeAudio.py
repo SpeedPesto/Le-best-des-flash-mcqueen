@@ -238,6 +238,7 @@ def setup_YoutubeAudio(bot):
             'quiet': True,
             'no_warnings': True,
             'noplaylist': True,
+            'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -276,6 +277,7 @@ def setup_YoutubeAudio(bot):
             'quiet': True,
             'no_warnings': True,
             'ignoreerrors': True,
+            'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:
@@ -327,6 +329,7 @@ def setup_YoutubeAudio(bot):
             'quiet': True,
             'no_warnings': True,
             'ignoreerrors': True,
+            'cookiefile': '/home/Le-best-des-flash-mcqueen/cookies.txt',
         }
 
         with yt_dlp.YoutubeDL(options) as ydl:

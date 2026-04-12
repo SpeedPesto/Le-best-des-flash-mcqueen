@@ -122,7 +122,7 @@ async def getEmbed(bot, data, author_id, stat):
         top5 = sorted(hours.items(), key=lambda x: x[1], reverse=True)[:5]
         description += "\n\n**Top 5 heures :**\n"
         for h, count in top5:
-            description += f"**{h}h** — {count} messages\n"
+            description += f"**{h}h** : {count} messages\n"
 
         return discord.Embed(title="Heure la plus active du serveur", description=description, color=0xff0000)
 
@@ -137,7 +137,7 @@ async def getEmbed(bot, data, author_id, stat):
 
         for d in range(7):
             count        = days.get(str(d), 0)
-            description += f"**{JOURS[d]}** — {count} messages\n"
+            description += f"**{JOURS[d]}** : {count} messages\n"
 
         return discord.Embed(title="Jours les plus actifs du serveur", description=description, color=0xff0000)
 
@@ -192,63 +192,6 @@ def save_stats(data):
         db.collection("stats").document("server").set(data["server"])
 
 def setup_stats(bot):
-    channel_users = {}
-
-    def flush_channel(data, channel_id, leaving_user_id=None):
-        if channel_id not in channel_users or not channel_users[channel_id]:
-            return
-
-        now     = datetime.now()
-        present = channel_users[channel_id]
-        server  = get_server_data(data)
-
-        for uid, join_dt in present.items():
-            seconds = round((now - join_dt).total_seconds())
-            if seconds < 5: continue
-            get_user_data(data, uid)["vocal_time"] += seconds
-
-        channel_obj = bot.get_channel(channel_id)
-        if channel_obj:
-            name = channel_obj.name
-            server["vocal_channels"][name] = server["vocal_channels"].get(name, 0) + max(
-                round((now - min(present.values())).total_seconds()), 0
-            )
-
-        user_ids = list(present.keys())
-        for pair in combinations(sorted(user_ids), 2):
-            key     = "_".join(pair)
-            seconds = round((now - max(present[pair[0]], present[pair[1]])).total_seconds())
-            if seconds >= 5:
-                server["duos"][key] = server["duos"].get(key, 0) + seconds
-
-        for trio in combinations(sorted(user_ids), 3):
-            key     = "_".join(trio)
-            seconds = round((now - max(present[u] for u in trio)).total_seconds())
-            if seconds >= 5:
-                server["trios"][key] = server["trios"].get(key, 0) + seconds
-
-        for uid in list(present.keys()):
-            if uid != leaving_user_id:
-                channel_users[channel_id][uid] = now
-        if leaving_user_id and leaving_user_id in channel_users[channel_id]:
-            del channel_users[channel_id][leaving_user_id]
-
-    @bot.event
-    async def on_voice_state_update(member, before, after):
-        if member == bot.user: return
-
-        user_id = str(member.id)
-        data    = load_stats()
-
-        if before.channel is not None:
-            flush_channel(data, before.channel.id, leaving_user_id=user_id if after.channel != before.channel else None)
-
-        if after.channel is not None:
-            if after.channel.id not in channel_users:
-                channel_users[after.channel.id] = {}
-            channel_users[after.channel.id][user_id] = datetime.now()
-
-        save_stats(data)
 
     @bot.event
     async def on_reaction_add(reaction, user):
@@ -291,5 +234,61 @@ async def handle_stats_message(message):
     day = str(message.created_at.weekday())
     server["message_hours"][hour] = server["message_hours"].get(hour, 0) + 1
     server["message_days"][day] = server["message_days"].get(day, 0) + 1
+
+    save_stats(data)
+
+channel_users = {}
+
+async def on_voice_state_update_stats(member, before, after, bot):
+
+    user_id = str(member.id)
+    data    = load_stats()
+
+    def flush_channel(data, channel_id, bot, leaving_user_id=None):
+        if channel_id not in channel_users or not channel_users[channel_id]:
+            return
+
+        now = datetime.now()
+        present = channel_users[channel_id]
+        server = get_server_data(data)
+
+        for uid, join_dt in present.items():
+            seconds = round((now - join_dt).total_seconds())
+            if seconds < 5: continue
+            get_user_data(data, uid)["vocal_time"] += seconds
+
+        channel_obj = bot.get_channel(channel_id)
+        if channel_obj:
+            name = channel_obj.name
+            server["vocal_channels"][name] = server["vocal_channels"].get(name, 0) + max(
+                round((now - min(present.values())).total_seconds()), 0
+            )
+
+        user_ids = list(present.keys())
+        for pair in combinations(sorted(user_ids), 2):
+            key = "_".join(pair)
+            seconds = round((now - max(present[pair[0]], present[pair[1]])).total_seconds())
+            if seconds >= 5:
+                server["duos"][key] = server["duos"].get(key, 0) + seconds
+
+        for trio in combinations(sorted(user_ids), 3):
+            key = "_".join(trio)
+            seconds = round((now - max(present[u] for u in trio)).total_seconds())
+            if seconds >= 5:
+                server["trios"][key] = server["trios"].get(key, 0) + seconds
+
+        for uid in list(present.keys()):
+            if uid != leaving_user_id:
+                channel_users[channel_id][uid] = now
+        if leaving_user_id and leaving_user_id in channel_users[channel_id]:
+            del channel_users[channel_id][leaving_user_id]
+
+    if before.channel is not None:
+        flush_channel(data, before.channel.id, bot, leaving_user_id=user_id if after.channel != before.channel else None)
+
+    if after.channel is not None:
+        if after.channel.id not in channel_users:
+            channel_users[after.channel.id] = {}
+        channel_users[after.channel.id][user_id] = datetime.now()
 
     save_stats(data)

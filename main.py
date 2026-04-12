@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from RdmCommands import setup_rdmCommand
-from YoutubeAudio import setup_YoutubeAudio
 from Stats import setup_stats
 from messagesStats import setup_messagesStats
 from iaController import setup_iaController
@@ -13,6 +12,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from Stats import handle_stats_message
 from messagesStats import handle_messages_stats
+from Stats import on_voice_state_update_stats
+from vocStats import on_voice_state_update_vocStats
 print(sys.executable)
 
 load_dotenv()
@@ -29,7 +30,6 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 setup_rdmCommand(bot)
-setup_YoutubeAudio(bot)
 setup_stats(bot)
 setup_messagesStats(bot)
 setup_iaController(bot)
@@ -44,6 +44,14 @@ async def on_message(message):
     await handle_messages_stats(message)
 
     await bot.process_commands(message)
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if member.bot: return
+
+    await on_voice_state_update_vocStats(member, before, after)
+    await on_voice_state_update_stats(member, before, after, bot)
+
 
 #----------------------------------------------------------------------------------------------#
 

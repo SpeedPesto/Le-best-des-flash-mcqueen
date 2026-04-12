@@ -68,7 +68,7 @@ async def getEmbed(bot, data, stat, user_id, display_name):
             duree    = sum(s["duration"] for s in sessions if s["channel"] == channel_name)
             h        = duree // 3600
             m        = (duree % 3600) // 60
-            desc    += f"{chan_str} — **{count} sessions** ({h}h {m}m)\n"
+            desc    += f"{chan_str} : **{count} sessions** ({h}h {m}m)\n"
 
     # -- Heure moyenne de connexion ---------------------------------------------
     elif stat == "heure_moy":
@@ -110,7 +110,7 @@ async def getEmbed(bot, data, stat, user_id, display_name):
 
     # -- Nombre de sessions -----------------------------------------------------
     elif stat == "session_count":
-        titre = f"Nombre de sessions vocales de {display_name}"
+        titre = f"Nombre de sessions vok de {display_name}"
         total = sum(s["duration"] for s in sessions)
         h     = total // 3600
         m     = (total % 3600) // 60
@@ -183,7 +183,7 @@ async def getEmbed(bot, data, stat, user_id, display_name):
             s_      = s["duration"] % 60
             channel = discord.utils.get(bot.get_all_channels(), name=s["channel"])
             chan_str = f"<#{channel.id}>" if channel else f"#{s['channel']}"
-            desc   += f"`{date}` — {chan_str} — **{h}h {m}m {s_}s**\n"
+            desc   += f"`{date}`, {chan_str}, **{h}h {m}m {s_}s**\n"
 
     else:
         embed = discord.Embed(title="Stat inconnue", color=0xff0000)
@@ -197,64 +197,11 @@ async def getEmbed(bot, data, stat, user_id, display_name):
 
 def setup_vocalStats(bot):
     db            = firestore.client()
-    join_times    = {}
-    join_channels = {}
     stats_choix   = ["total_time", "most_pop_channel", "heure_moy", "moy_length", "session_count", "most_pop_day", "longest_session", "streak", "history"]
 
     def load_vocal():
         docs = db.collection("vocal").stream()
         return {doc.id: doc.to_dict() for doc in docs}
-
-    def save_vocal_session(user_id, session):
-        doc_ref  = db.collection("vocal").document(user_id)
-        doc      = doc_ref.get()
-        sessions = doc.to_dict().get("sessions", []) if doc.exists else []
-        sessions.append(session)
-        doc_ref.set({"sessions": sessions})
-
-    @bot.event
-    async def on_voice_state_update(member, before, after):
-        if member.bot: return
-
-        user_id = str(member.id)
-
-        # Connexion
-        if before.channel is None and after.channel is not None:
-            join_times[user_id]    = datetime.datetime.now()
-            join_channels[user_id] = after.channel.name
-
-        # Déconnexion
-        elif after.channel is None and before.channel is not None:
-            if user_id not in join_times:
-                return
-
-            duration = round((datetime.datetime.now() - join_times.pop(user_id)).total_seconds())
-            channel  = join_channels.pop(user_id, before.channel.name)
-
-            if duration < 5:
-                return
-
-            save_vocal_session(user_id, {
-                "joined_at": datetime.datetime.now().isoformat(),
-                "channel":   channel,
-                "duration":  duration,
-            })
-
-        # Changement de salon
-        elif before.channel is not None and after.channel is not None and before.channel != after.channel:
-            if user_id in join_times:
-                duration = round((datetime.datetime.now() - join_times[user_id]).total_seconds())
-                channel  = join_channels.get(user_id, before.channel.name)
-
-                if duration >= 5:
-                    save_vocal_session(user_id, {
-                        "joined_at": join_times[user_id].isoformat(),
-                        "channel":   channel,
-                        "duration":  duration,
-                    })
-
-            join_times[user_id]    = datetime.datetime.now()
-            join_channels[user_id] = after.channel.name
 
     async def vocal_user_autocomplet(interaction: discord.Interaction, current: str):
         choix = [member.display_name for member in interaction.guild.members if not member.bot]
@@ -281,3 +228,56 @@ def setup_vocalStats(bot):
             view        = vocalStatView(bot, load_vocal, user_id, user)
             if file: await interaction.followup.send(embed=embed, file=file, view=view)
             else:    await interaction.followup.send(embed=embed, view=view)
+
+
+async def on_voice_state_update_vocStats(member, before, after):
+
+    db = firestore.client()
+    user_id = str(member.id)
+    join_times = {}
+    join_channels = {}
+
+    def save_vocal_session(user_id, session):
+        doc_ref  = db.collection("vocal").document(user_id)
+        doc      = doc_ref.get()
+        sessions = doc.to_dict().get("sessions", []) if doc.exists else []
+        sessions.append(session)
+        doc_ref.set({"sessions": sessions})
+
+    # Connexion
+    if before.channel is None and after.channel is not None:
+        join_times[user_id]    = datetime.datetime.now()
+        join_channels[user_id] = after.channel.name
+
+    # Déconnexion
+    elif after.channel is None and before.channel is not None:
+        if user_id not in join_times:
+            return
+
+        duration = round((datetime.datetime.now() - join_times.pop(user_id)).total_seconds())
+        channel  = join_channels.pop(user_id, before.channel.name)
+
+        if duration < 3:
+            return
+
+        save_vocal_session(user_id, {
+            "joined_at": datetime.datetime.now().isoformat(),
+            "channel":   channel,
+            "duration":  duration,
+        })
+
+    # Changement de salon
+    elif before.channel is not None and after.channel is not None and before.channel != after.channel:
+        if user_id in join_times:
+            duration = round((datetime.datetime.now() - join_times[user_id]).total_seconds())
+            channel  = join_channels.get(user_id, before.channel.name)
+
+            if duration >= 3:
+                save_vocal_session(user_id, {
+                    "joined_at": join_times[user_id].isoformat(),
+                    "channel":   channel,
+                    "duration":  duration,
+                })
+
+        join_times[user_id]    = datetime.datetime.now()
+        join_channels[user_id] = after.channel.name

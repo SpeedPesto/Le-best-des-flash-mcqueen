@@ -31,14 +31,13 @@ class WhoSayView(discord.ui.View):
 
             if auteur == self.bon_auteur:
                 if self.mise : gain = self.mise * 2
-                await interaction.response.send_message(f"Bravo, c'était éfféctivement **{self.bon_auteur.name}** !"
-                                                        f"{f"\nTu remporte le double de ta mise (**{gain}**) !" if self.mise else ""}"
-                                                        )
+                bonus = f"\nTu remportes le double de ta mise (**{gain}**) !" if self.mise else ""
+                await interaction.response.send_message(
+                    f"Bravo, c'était effectivement **{self.bon_auteur.name}** !{bonus}")
                 if self.mise : save_banque(user_id, gain)
             else:
-                await interaction.response.send_message(f"Faux, C'était **{self.bon_auteur.name}** !"
-                                                        f"{f"\nTu pert ta mise (**{self.mise}**) !" if self.mise else ""}"
-                                                        )
+                malus = f"\nTu perds ta mise (**{self.mise}**) !" if self.mise else ""
+                await interaction.response.send_message(f"Faux, c'était **{self.bon_auteur.name}** !{malus}")
                 if self.mise: save_banque(user_id, self.mise, False)
         return callback
 
@@ -58,10 +57,8 @@ class WhoSayView(discord.ui.View):
 
             if secondes_restantes == 0:
                 self.termine = True
-                embed.set_footer(text=
-                                 f"Temps écoulé ! \n Réponse : {self.bon_auteur.name}"
-                                 f"{f"\nTu pert ta mise (**{self.mise}**) !" if self.mise else ""}"
-                                 )
+                malus = f"\nTu perds ta mise (**{self.mise}**) !" if self.mise else ""
+                embed.set_footer(text=f"Temps écoulé ! \nRéponse : {self.bon_auteur.name}{malus}")
                 if self.mise: save_banque(user_id, self.mise, False)
                 await message.edit(embed=embed, view=None)
 

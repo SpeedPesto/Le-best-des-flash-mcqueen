@@ -38,7 +38,7 @@ async def getEmbed(bot, data, author_id, stat):
         if stat == "message_count":
             titre, clé, unité = "Top 10 : Nombre de messages", "message_count", "messages"
         elif stat == "vocal_time":
-            titre, clé, unité = "Top 10 : Temps en vok", "vocal_time", "s"
+            titre, clé, unité = "Top 10 : Temps en vok", "vocal_time", ""
         elif stat == "reaction_count":
             titre, clé, unité = "Top 10 : Réactions", "reaction_count", "réactions"
 
@@ -49,13 +49,21 @@ async def getEmbed(bot, data, author_id, stat):
         for i, (user_id, stats) in enumerate(classement):
             user = await bot.fetch_user(int(user_id))
             if i < 10:
-                description += f"**{i+1}.** {user.name} : {stats.get(clé, 0)} {unité}\n"
+                if stat == "vocal_time":
+                    total = stats.get(clé, 0)
+
+                    heures = total // 3600
+                    minutes = (total % 3600) // 60
+                    secondes = total % 60
+
+                    description += f"**{i + 1}.** {user.name} : **{heures}h {minutes}m {secondes}s**\n"
+                else : description += f"**{i+1}.** {user.name} : {stats.get(clé, 0)} {unité}\n"
             if user_id == str(author_id):
                 user_rank = (i + 1, stats.get(clé, 0))
 
         embed = discord.Embed(title=titre, description=description, color=0xff0000)
         if user_rank and user_rank[0] > 10:
-            embed.set_footer(text=f"Ta position : #{user_rank[0]} — {user_rank[1]} {unité}")
+            embed.set_footer(text=f"Ta position : #{user_rank[0]} : {user_rank[1]} {unité}")
         return embed
 
     server = data.get("server", {})
@@ -73,7 +81,7 @@ async def getEmbed(bot, data, author_id, stat):
             u1   = await bot.fetch_user(int(ids[0]))
             u2   = await bot.fetch_user(int(ids[1]))
             h, m = seconds // 3600, (seconds % 3600) // 60
-            description += f"**{i+1}.** {u1.name} & {u2.name} — **{h}h {m}m**\n"
+            description += f"**{i+1}.** {u1.name} et {u2.name} : **{h}h {m}m**\n"
 
         return discord.Embed(title="Duo les plus ensemble", description=description, color=0xff0000)
 
@@ -89,7 +97,7 @@ async def getEmbed(bot, data, author_id, stat):
             ids   = trio.split("_")
             users = [await bot.fetch_user(int(uid)) for uid in ids]
             h, m  = seconds // 3600, (seconds % 3600) // 60
-            description += f"**{i+1}.** {' & '.join(u.name for u in users)} — **{h}h {m}m**\n"
+            description += f"**{i+1}.** {' et '.join(u.name for u in users)} : **{h}h {m}m**\n"
 
         return discord.Embed(title="Trios les plus ensemble", description=description, color=0xff0000)
 
@@ -105,7 +113,7 @@ async def getEmbed(bot, data, author_id, stat):
             channel  = discord.utils.get(bot.get_all_channels(), name=channel_name)
             chan_str  = f"<#{channel.id}>" if channel else f"#{channel_name}"
             h, m     = seconds // 3600, (seconds % 3600) // 60
-            description += f"**{i+1}.** {chan_str} — **{h}h {m}m**\n"
+            description += f"**{i+1}.** {chan_str} : **{h}h {m}m**\n"
 
         return discord.Embed(title="Salons vocaux les plus utilisés", description=description, color=0xff0000)
 

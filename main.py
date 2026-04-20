@@ -7,6 +7,7 @@ from iaController import setup_iaController
 import sys
 from dotenv import load_dotenv
 from vocStats import setup_vocalStats
+from EnfantsManager import setup_EnfantsManager
 import os
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -14,6 +15,8 @@ from Stats import handle_stats_message
 from messagesStats import handle_messages_stats
 from Stats import on_voice_state_update_stats
 from vocStats import on_voice_state_update_vocStats
+from EnfantsManager import setup_banque
+from WhoSay import setup_WhoSay
 print(sys.executable)
 
 load_dotenv()
@@ -34,6 +37,8 @@ setup_stats(bot)
 setup_messagesStats(bot)
 setup_iaController(bot)
 setup_vocalStats(bot)
+setup_EnfantsManager(bot)
+setup_WhoSay(bot)
 
 @bot.event
 async def on_message(message):
@@ -63,5 +68,8 @@ async def on_ready():
         print(f"Commandes synchronisées : {len(synced)}")
     except Exception as e:
         print(e)
+
+    for guild in bot.guilds:
+        await setup_banque(guild)
 
 bot.run(TOKEN)

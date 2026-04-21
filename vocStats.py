@@ -254,16 +254,17 @@ async def on_voice_state_update_vocStats(member, before, after):
         if user_id not in join_times:
             return
 
-        duration = round((datetime.datetime.now() - join_times.pop(user_id)).total_seconds())
-        channel  = join_channels.pop(user_id, before.channel.name)
+        join_time = join_times.pop(user_id)  # on pop une seule fois
+        channel = join_channels.pop(user_id, before.channel.name)
+        duration = round((datetime.datetime.now() - join_time).total_seconds())
 
         if duration < 3:
             return
 
         save_vocal_session(user_id, {
-            "joined_at": join_times.pop(user_id).isoformat(),
-            "channel":   channel,
-            "duration":  duration,
+            "joined_at": join_time.isoformat(),
+            "channel": channel,
+            "duration": duration,
         })
 
     # Changement de salon

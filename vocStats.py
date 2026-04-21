@@ -229,13 +229,13 @@ def setup_vocalStats(bot):
             if file: await interaction.followup.send(embed=embed, file=file, view=view)
             else:    await interaction.followup.send(embed=embed, view=view)
 
+join_times = {}
+join_channels = {}
 
 async def on_voice_state_update_vocStats(member, before, after):
 
     db = firestore.client()
     user_id = str(member.id)
-    join_times = {}
-    join_channels = {}
 
     def save_vocal_session(user_id, session):
         doc_ref  = db.collection("vocal").document(user_id)
@@ -261,7 +261,7 @@ async def on_voice_state_update_vocStats(member, before, after):
             return
 
         save_vocal_session(user_id, {
-            "joined_at": datetime.datetime.now().isoformat(),
+            "joined_at": join_times.pop(user_id).isoformat(),
             "channel":   channel,
             "duration":  duration,
         })

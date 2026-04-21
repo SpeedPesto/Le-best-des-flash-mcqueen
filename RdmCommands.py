@@ -75,3 +75,12 @@ def setup_rdmCommand(bot):
             save_note(note)
 
         await interaction.response.send_message(f"{guest} : {rdm_num} / 100")
+
+    @bot.tree.command(name="dcall")
+    async def disconnect_all(interaction: discord.Interaction):
+        count = 0
+        for channel in interaction.guild.voice_channels:
+            for member in channel.members:
+                await member.move_to(None)
+                count += 1
+        await interaction.response.send_message(f"{count} utilisateur(s) déconnecté(s).", ephemeral=True)

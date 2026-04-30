@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from RdmCommands import setup_rdmCommand
+from RogueLite import setup_roguelite
 from Stats import setup_stats
 from messagesStats import setup_messagesStats
 from iaController import setup_iaController
@@ -17,6 +18,8 @@ from Stats import on_voice_state_update_stats
 from vocStats import on_voice_state_update_vocStats
 from EnfantsManager import setup_banque
 from WhoSay import setup_WhoSay
+from RogueLite import setup_roguelite
+from groqCommands import setup_groq
 print(sys.executable)
 
 load_dotenv()
@@ -39,10 +42,15 @@ setup_iaController(bot)
 setup_vocalStats(bot)
 setup_EnfantsManager(bot)
 setup_WhoSay(bot)
+setup_roguelite(bot)
+setup_groq(bot)
 
 @bot.event
 async def on_message(message):
     if message.author.bot:
+        return
+
+    if message.channel.id == 1483880398470774804 or message.channel.id == 1486099898385301506:
         return
 
     await handle_stats_message(message)

@@ -12,7 +12,7 @@ def setup_rdmCommand(bot):
         await interaction.response.send_message("Ka-chow 🚗💨")
 
     @bot.tree.command(name="qui_es-tu")
-    async def salut(interaction: discord.Interaction):
+    async def qui_es_tu(interaction: discord.Interaction):
         message = (
             "*Bon allons-y concentrations, rapide...* **Je suis rapide !**\n"
             "1 vainqueur 42 perdants, j'en fais qu'une boucher a mon ptit déjeuner des perdants !\n"
@@ -22,7 +22,7 @@ def setup_rdmCommand(bot):
         await interaction.response.send_message(message)
 
     @bot.tree.command(name="rdm_mess")
-    async def salut(interaction: discord.Interaction):
+    async def rdm_mess(interaction: discord.Interaction):
         await interaction.response.defer()
 
         messages = []
@@ -44,7 +44,7 @@ def setup_rdmCommand(bot):
         await interaction.followup.send(embed=embed)
 
     @bot.tree.command(name="rdm_num")
-    async def salut(interaction: discord.Interaction, nbr:int):
+    async def rdm_num(interaction: discord.Interaction, nbr:int):
 
         reponse = random.randrange(0, nbr)
 
@@ -66,7 +66,15 @@ def setup_rdmCommand(bot):
                 json.dump(note, f, indent=4)
 
         note = load_note()
-        rdm_num = random.randrange(0, 100)
+        rdm_num = random.randint(1, 100)
+
+        motbcp = [
+            "mon paf",
+            "mon charisme",
+            "la taille de mon paf",
+        ]
+
+        if guest in motbcp : rdm_num = random.randint(70, 100)
 
         if note.get(guest) is not None:
             rdm_num = note[guest]

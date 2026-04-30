@@ -26,7 +26,7 @@ class WhoSayView(discord.ui.View):
             user_id = str(interaction.user.id)
 
             if interaction.user.id != self.user_id:
-                await interaction.followup.send("Ce message ne te concerne pas :( occupe toi de tes affaires", ephemeral=True)
+                await interaction.response.send_message("Ce message ne te concerne pas :( occupe toi de tes affaires", ephemeral=True)
                 return
 
             if auteur == self.bon_auteur:
@@ -138,7 +138,7 @@ def setup_WhoSay(bot):
 
         members = []
         for member in interaction.guild.members:
-            # if member.bot or member == author : continue
+            if member.bot or member == author : continue
             members.append(member)
 
         faux = random.sample(members, 2)

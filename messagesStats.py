@@ -3,7 +3,14 @@ import discord
 import matplotlib.pyplot as plt
 import io
 from collections import Counter
+
+from discord import DiscordServerError
 from firebase_admin import firestore
+from typing import Optional
+from Stats import handle_stats_message
+from Stats import load_stats
+from Stats import save_stats
+import asyncio
 
 JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
@@ -209,11 +216,14 @@ def load_messages():
 def save_message(user_id, message):
     db = get_db()
     doc_ref = db.collection("messages").document(user_id)
-    doc = doc_ref.get()
-    messages = doc.to_dict().get("messages", []) if doc.exists else []
-    messages.append(message)
-    doc_ref.set({"messages": messages})
+    doc_ref.set(
+        {"messages": firestore.ArrayUnion([message])},
+        merge=True
+    )
 
+async def save_message_async(user_id, message):
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, save_message, user_id, message)
 
 def setup_messagesStats(bot):
 
@@ -243,13 +253,112 @@ def setup_messagesStats(bot):
             if file: await interaction.followup.send(embed=embed, file=file, view=view)
             else:    await interaction.followup.send(embed=embed, view=view)
 
+    async def channels_autocomplet(interaction: discord.Interaction, current: str):
+        return [
+            discord.app_commands.Choice(name=channel.name, value=str(channel.id))
+            for channel in interaction.guild.text_channels
+            if current.lower() in channel.name.lower()
+        ][:25]
+
+    @bot.tree.command(name="msg_analyse")
+    @discord.app_commands.describe(c_id="Channel à ignorer (OPTIONNEL)", c2_id="Channel à ignorer (OPTIONNEL)", c3_id="Channel à ignorer (OPTIONNEL)")
+    @discord.app_commands.autocomplete(c_id=channels_autocomplet, c2_id=channels_autocomplet, c3_id=channels_autocomplet)
+    async def msg_analyse(interaction: discord.Interaction, c_id: Optional[str] = None, c2_id: Optional[str] = None, c3_id: Optional[str] = None):
+        await interaction.response.defer()
+
+        ignores = {x for x in [c_id, c2_id, c3_id] if x}
+        channels = [c for c in interaction.guild.text_channels if str(c.id) not in ignores]
+
+        count = 0
+        ids_cache = {}
+        data_stats = load_stats()
+
+        msg = await interaction.followup.send(f"**0** messages sauvegardés dans **||{len(channels)}||** channels")
+
+        def load_message_ids(user_id: str) -> set:
+            doc = get_db().collection("messages").document(user_id).get()
+            if not doc.exists:
+                return set()
+            return set(str(m["id"]) for m in doc.to_dict().get("messages", []))
+
+        messages_cache = {}  # {user_id: [message1, message2, ...]}
+
+        for channel in channels:
+            try:
+                async for message in channel.history(limit=None):
+                    if message.author.id == 563434444321587202: continue
+                    user_id = str(message.author.id)
+
+                    id = channel.id
+                    if id == 1483880398470774804 or id == 1486099898385301506: continue
+
+                    if user_id not in ids_cache:
+                        ids_cache[user_id] = load_message_ids(user_id)
+
+                    if str(message.id) in ids_cache[user_id]:
+                        continue
+
+                    await handle_stats_message(message, data=data_stats)
+
+                    if user_id not in messages_cache:
+                        messages_cache[user_id] = []
+                    messages_cache[user_id].append({
+                        "content": message.content,
+                        "date": message.created_at.isoformat(),
+                        "channel": message.channel.name,
+                        "id": message.id,
+                        "word_count": len(message.content.split()),
+                        "char_count": len(message.content),
+                        "weekday": message.created_at.weekday()
+                    })
+
+                    ids_cache[user_id].add(str(message.id))
+                    count += 1
+                    if count % 20 == 0:
+                        await msg.edit(
+                            content=f"**{count}** nouveaux messages sauvegardés dans **||{len(channels)}||** channels")
+
+                    # Flush tous les 1000 messages
+                    if count % 1000 == 0:
+                        loop = asyncio.get_event_loop()
+                        for uid, msgs in messages_cache.items():
+                            if not msgs: continue
+
+                            def save_batch(uid, messages):
+                                doc_ref = get_db().collection("messages").document(uid)
+                                doc_ref.set({"messages": firestore.ArrayUnion(messages)}, merge=True)
+
+                            await loop.run_in_executor(None, save_batch, uid, msgs)
+                            messages_cache[uid] = []  # Vider après sauvegarde
+
+            except discord.Forbidden:
+                continue
+
+            except DiscordServerError:
+                await asyncio.sleep(5)
+                continue
+
+        # Flush final pour les messages restants
+        loop = asyncio.get_event_loop()
+        for user_id, msgs in messages_cache.items():
+            if not msgs: continue
+
+            def save_batch(uid, messages):
+                doc_ref = get_db().collection("messages").document(uid)
+                doc_ref.set({"messages": firestore.ArrayUnion(messages)}, merge=True)
+
+            await loop.run_in_executor(None, save_batch, user_id, msgs)
+
+        save_stats(data_stats)
+        await msg.edit(content=f"**{count}** nouveaux messages sauvegardés dans {len(channels)} channels")
+
 async def handle_messages_stats(message):
-    if message.content == "" or message.author.bot:
+    if message.content == "" :#or message.author.bot:
         return
 
     user_id = str(message.author.id)
 
-    save_message(user_id, {
+    await save_message_async(user_id, {
         "content": message.content,
         "date": message.created_at.isoformat(),
         "channel": message.channel.name,

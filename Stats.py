@@ -165,7 +165,10 @@ def get_user_data(data, user_id):
         data["users"] = {}
     if user_id not in data["users"]:
         data["users"][user_id] = default_user_stats.copy()
-    return data["users"][user_id]
+    user = data["users"][user_id]
+    for key, val in default_user_stats.items():
+        user.setdefault(key, val)
+    return user
 
 def get_server_data(data):
     if "server" not in data:
@@ -231,8 +234,11 @@ def setup_stats(bot):
         embed = await getEmbed(bot, data, interaction.user.id, stat)
         await interaction.followup.send(embed=embed, view=StatsView(bot, load_stats))
 
-async def handle_stats_message(message):
-    data = load_stats()
+async def handle_stats_message(message, data=None):
+    save = data is None
+    if data is None:
+        data = load_stats()
+
     user_id = str(message.author.id)
     server = get_server_data(data)
 
@@ -243,7 +249,8 @@ async def handle_stats_message(message):
     server["message_hours"][hour] = server["message_hours"].get(hour, 0) + 1
     server["message_days"][day] = server["message_days"].get(day, 0) + 1
 
-    save_stats(data)
+    if save:
+        save_stats(data)
 
 channel_users = {}
 
